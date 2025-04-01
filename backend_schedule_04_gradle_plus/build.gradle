@@ -17,6 +17,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web' // REST API 개발 필수
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa' // JPA 설정
     implementation 'org.postgresql:postgresql' // PostgreSQL 드라이버 추가
+    implementation 'com.google.firebase:firebase-admin:9.1.1'
+    implementation 'com.google.auth:google-auth-library-credentials:0.25.5' // GoogleCredentials 사용을 위한 라이브러리 추가
 
     // 개발 편의 기능 (옵션)
     developmentOnly 'org.springframework.boot:spring-boot-devtools'

@@ -3,6 +3,8 @@ package org.example.controller;
 import lombok.RequiredArgsConstructor;
 import org.example.dto.ScheduleDTO;
 import org.example.entity.Schedule;
+import org.example.service.ReminderService;
+
 import org.example.service.ScheduleService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,15 +18,24 @@ import java.util.List;
 public class ScheduleController {
 
     private final ScheduleService scheduleService;
+    private final ReminderService reminderService;
 
     // 일정 추가
     @PostMapping
     public ResponseEntity<Schedule> addSchedule(
             @RequestHeader("firebaseUid") String firebaseUid,
             @RequestBody ScheduleDTO dto,
-            @RequestParam List<Integer> reminderTimes) {
-        return ResponseEntity.ok(scheduleService.addSchedule(firebaseUid, dto, reminderTimes));
+            @RequestParam(required = false, defaultValue = "0") List<Integer> reminderTimes) {
+
+        Schedule schedule = scheduleService.addSchedule(firebaseUid, dto, reminderTimes);
+
+        // 🔔 알림 예약
+        reminderService.scheduleDefaultReminder(schedule);
+        reminderService.scheduleAdditionalReminders(schedule, reminderTimes);
+
+        return ResponseEntity.ok(schedule);
     }
+
 
     @GetMapping("/todo")
     public ResponseEntity<List<Schedule>> getToDoList(@RequestHeader("firebaseUid") String firebaseUid) {
