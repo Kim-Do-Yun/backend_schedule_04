@@ -22,7 +22,11 @@ public class Schedule {
     private String firebaseUid; // 사용자 고유 ID
     private String title; // 일정 제목
     private String description; // 일정 설명
+
+    @Column(name = "start_time", nullable = false)
     private LocalDateTime startTime; // 시작 시간
+
+    @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime; // 종료 시간
 
     private Integer categoryId; // 카테고리 ID

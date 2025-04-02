@@ -7,7 +7,6 @@ import org.example.entity.Reminder;
 import org.example.entity.Schedule;
 import org.springframework.stereotype.Service;
 import org.example.repository.ReminderRepository;
-import org.example.service.FCMService;
 
 import java.util.concurrent.TimeUnit;
 import java.time.Duration;
@@ -15,9 +14,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import org.springframework.context.annotation.DependsOn;
 
 @Service
 @RequiredArgsConstructor
+@DependsOn("FCMService")
 public class ReminderService {
     private final ReminderRepository reminderRepository;
     private final FCMService fcmService;  // FCM 서비스 주입
@@ -27,10 +28,26 @@ public class ReminderService {
         reminderRepository.save(reminder);
     }
 
+    // 새로운 리마인더 예약 (Schedule과 minutesBefore를 받아 Reminder 객체 생성)
+    public void scheduleReminder(Schedule schedule, int minutesBefore) {
+        Reminder reminder = new Reminder(schedule, minutesBefore);
+        saveReminder(reminder);
+        scheduleReminder(reminder);  // 기존 메서드 호출
+    }
+
+
     // 🔔 일정의 기본 알림 예약 (startTime에 맞춰 자동 설정)
     public void scheduleDefaultReminder(Schedule schedule) {
-        scheduleReminder(schedule, 0);  // 기본적으로 시작 시간에 알림을 보냄
+        System.out.println("📌 기본 알림 예약: " + schedule.getTitle() + ", 시작 시간: " + schedule.getStartTime());
+
+        if (schedule.getStartTime() == null) {
+            System.err.println("🚨 오류: 일정의 startTime이 NULL입니다!");
+            return; // startTime이 없으면 예약할 수 없으므로 종료
+        }
+
+        scheduleReminder(schedule, 0);
     }
+
 
     // 🔔 사용자가 추가한 리마인더 예약
     public void scheduleAdditionalReminders(Schedule schedule, List<Integer> reminderTimes) {
