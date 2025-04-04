@@ -20,7 +20,7 @@ public class ReminderInitializer {
     public void initReminders() {
         List<Reminder> reminders = reminderRepository.findAll();
         for (Reminder reminder : reminders) {
-            reminderService.scheduleReminder(reminder);
+            reminderService.scheduleExistingReminder(reminder);
         }
     }
 }

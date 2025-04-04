@@ -29,10 +29,10 @@ public class ReminderService {
     }
 
     // 새로운 리마인더 예약 (Schedule과 minutesBefore를 받아 Reminder 객체 생성)
-    public void scheduleReminder(Schedule schedule, int minutesBefore) {
+    public void createAndScheduleReminder(Schedule schedule, int minutesBefore) {
         Reminder reminder = new Reminder(schedule, minutesBefore);
         saveReminder(reminder);
-        scheduleReminder(reminder);  // 기존 메서드 호출
+        scheduleExistingReminder(reminder);  // 기존 메서드 호출
     }
 
 
@@ -45,14 +45,14 @@ public class ReminderService {
             return; // startTime이 없으면 예약할 수 없으므로 종료
         }
 
-        scheduleReminder(schedule, 0);
+        createAndScheduleReminder(schedule, 0);
     }
 
 
     // 🔔 사용자가 추가한 리마인더 예약
     public void scheduleAdditionalReminders(Schedule schedule, List<Integer> reminderTimes) {
         for (int minutesBefore : reminderTimes) {
-            scheduleReminder(schedule, minutesBefore);
+            createAndScheduleReminder(schedule, minutesBefore);
         }
     }
 
@@ -74,13 +74,13 @@ public class ReminderService {
                 continue;
             }
 
-            scheduleReminder(reminder);
+            scheduleExistingReminder(reminder);
         }
     }
 
 
     // 새로운 리마인더 예약
-    public void scheduleReminder(Reminder reminder) {
+    public void scheduleExistingReminder(Reminder reminder) {
         if (reminder == null || reminder.getSchedule() == null) {
             System.err.println("🚨 잘못된 리마인더: reminder 또는 schedule이 null입니다.");
             return;

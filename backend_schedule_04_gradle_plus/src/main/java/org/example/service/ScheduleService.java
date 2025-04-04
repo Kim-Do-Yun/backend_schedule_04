@@ -64,7 +64,7 @@ public class ScheduleService {
                 .build();
 
         reminder = reminderRepository.save(reminder);
-        reminderService.scheduleReminder(reminder); // 저장 후 즉시 알림 예약
+        reminderService.scheduleExistingReminder(reminder); // 저장 후 즉시 알림 예약
         return reminder;
     }
 
