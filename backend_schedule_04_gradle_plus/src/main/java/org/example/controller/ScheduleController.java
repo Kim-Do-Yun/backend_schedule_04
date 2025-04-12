@@ -24,17 +24,20 @@ public class ScheduleController {
     @PostMapping
     public ResponseEntity<Schedule> addSchedule(
             @RequestHeader("firebaseUid") String firebaseUid,
-            @RequestBody ScheduleDTO dto,
-            @RequestParam(required = false, defaultValue = "0") List<Integer> reminderTimes) {
+            @RequestBody ScheduleDTO dto) {
+        List<Integer> reminderTimes = dto.getReminderMinutesBeforeList();
 
         Schedule schedule = scheduleService.addSchedule(firebaseUid, dto, reminderTimes);
 
-        // 🔔 알림 예약
         reminderService.scheduleDefaultReminder(schedule);
-        reminderService.scheduleAdditionalReminders(schedule, reminderTimes);
+
+        if (reminderTimes != null && !reminderTimes.isEmpty()) {
+            reminderService.scheduleAdditionalReminders(schedule, reminderTimes);
+        }
 
         return ResponseEntity.ok(schedule);
     }
+
 
 
     @GetMapping("/todo")

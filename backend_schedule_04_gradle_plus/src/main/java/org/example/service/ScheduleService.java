@@ -8,9 +8,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.example.repository.ReminderRepository;
 import org.example.entity.Reminder;
+import org.example.repository.CategoryRepository;
+import org.example.entity.Category;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -19,6 +21,7 @@ public class ScheduleService {
     private final ScheduleRepository scheduleRepository;
     private final ReminderService reminderService;
     private final ReminderRepository reminderRepository;
+    private final CategoryRepository categoryRepository;
 
     // 일정 전체 조회
     public List<Schedule> fetchUserSchedule() {
@@ -33,10 +36,36 @@ public class ScheduleService {
     // 일정 추가
     @Transactional
     public Schedule addSchedule(String firebaseUid, ScheduleDTO dto, List<Integer> reminderTimes) {
-        Schedule schedule = Schedule.fromDTO(firebaseUid, dto);
-        reminderTimes.forEach(schedule::addReminder);
+        if (firebaseUid == null || firebaseUid.isBlank()) {
+            throw new IllegalArgumentException("Firebase UID는 필수입니다.");
+        }
+
+        if (dto == null) {
+            throw new IllegalArgumentException("DTO는 null일 수 없습니다.");
+        }
+
+        if (dto.getCategoryId() == null) {
+            throw new IllegalArgumentException("카테고리 ID는 null일 수 없습니다.");
+        }
+
+        if (dto.getStartTime() == null || dto.getEndTime() == null) {
+            throw new IllegalArgumentException("시작 시간과 종료 시간은 필수입니다.");
+        }
+
+        Category category = categoryRepository.findById(dto.getCategoryId())
+                .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다."));
+
+        Schedule schedule = Schedule.fromDTO(firebaseUid, dto, category);
+
+        if (reminderTimes != null) {
+            reminderTimes.forEach(schedule::addReminder);
+        }
+
         return scheduleRepository.save(schedule);
     }
+
+
+
 
     public List<Schedule> getToDoList(String firebaseUid) {
         return scheduleRepository.findPriorityOrHasAdditionalReminders(firebaseUid);
@@ -80,10 +109,20 @@ public class ScheduleService {
         if (dto.getDescription() != null) schedule.setDescription(dto.getDescription());
         if (dto.getStartTime() != null) schedule.setStartTime(dto.getStartTime());
         if (dto.getEndTime() != null) schedule.setEndTime(dto.getEndTime());
-        if (dto.getCategoryId() != null) schedule.setCategoryId(dto.getCategoryId());
+        schedule.setPriority(dto.getPriority());
+        schedule.setRecurring(dto.isRecurring());
+        schedule.setRecurrenceDays(dto.getRecurrenceDays());
+        schedule.setReminderMinutesBeforeList(dto.getReminderMinutesBeforeList());
+
+        if (dto.getCategoryId() != null) {
+            Category category = categoryRepository.findById(dto.getCategoryId())
+                    .orElseThrow(() -> new IllegalArgumentException("카테고리를 찾을 수 없습니다."));
+            schedule.setCategory(category);
+        }
 
         return scheduleRepository.save(schedule);
     }
+
 
     // 일정 삭제
     @Transactional

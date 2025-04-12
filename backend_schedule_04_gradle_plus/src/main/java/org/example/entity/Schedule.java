@@ -1,11 +1,12 @@
 package org.example.entity;
 
 import jakarta.persistence.*;
+
 import lombok.*;
 import org.example.dto.ScheduleDTO;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Entity
 @Getter
@@ -28,8 +29,23 @@ public class Schedule {
 
     @Column(name = "end_time", nullable = false)
     private LocalDateTime endTime; // 종료 시간
+    private int priority;
 
-    private Integer categoryId; // 카테고리 ID
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
+
+    private boolean isRecurring;
+
+    @ElementCollection
+    @CollectionTable(name = "schedule_recurrence_days", joinColumns = @JoinColumn(name = "schedule_id"))
+    @Column(name = "day_of_week")
+    private List<Integer> recurrenceDays;
+
+    private List<Integer> reminderMinutesBeforeList;
+
+    @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Reminder> reminders = new ArrayList<>();
 
     private Boolean isHiddenInToDo = false; // To-Do 리스트에서 숨김 여부 (기본값 false)
     private Boolean isReminderEnabled = true; // 리마인더 활성화 여부 (기본값 true)
@@ -39,14 +55,20 @@ public class Schedule {
     private User user;
 
     // ScheduleDTO -> Schedule 변환 메서드
-    public static Schedule fromDTO(String firebaseUid, ScheduleDTO dto) {
+    public static Schedule fromDTO(String firebaseUid, ScheduleDTO dto, Category category) {
         return Schedule.builder()
                 .firebaseUid(firebaseUid)
                 .title(dto.getTitle())
                 .description(dto.getDescription())
                 .startTime(dto.getStartTime())
                 .endTime(dto.getEndTime())
-                .categoryId(dto.getCategoryId())
+                .priority(dto.getPriority())
+                .category(category)
+                .isRecurring(dto.isRecurring())
+                .recurrenceDays(dto.getRecurrenceDays() != null ? dto.getRecurrenceDays() : new ArrayList<>())
+                .reminderMinutesBeforeList(dto.getReminderMinutesBeforeList())
+                .isHiddenInToDo(false)         // 기본값 처리
+                .isReminderEnabled(true)      // 기본값 처리
                 .build();
     }
 
@@ -61,9 +83,6 @@ public class Schedule {
         this.startTime = this.startTime.plusDays(days);
         this.endTime = this.endTime.plusDays(days);
     }
-
-    @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Reminder> reminders = new ArrayList<>();
 
     // 리마인더 추가 메서드
     public void addReminder(int minutesBefore) {

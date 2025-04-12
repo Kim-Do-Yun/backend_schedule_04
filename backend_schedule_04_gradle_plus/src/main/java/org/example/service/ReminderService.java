@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.example.entity.Reminder;
 import org.example.entity.Schedule;
+import org.example.repository.ScheduleRepository;
 import org.springframework.stereotype.Service;
 import org.example.repository.ReminderRepository;
 
@@ -22,6 +23,7 @@ import org.springframework.context.annotation.DependsOn;
 public class ReminderService {
     private final ReminderRepository reminderRepository;
     private final FCMService fcmService;  // FCM 서비스 주입
+    private final ScheduleRepository scheduleRepository;
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     public void saveReminder(Reminder reminder) {
@@ -51,9 +53,12 @@ public class ReminderService {
 
     // 🔔 사용자가 추가한 리마인더 예약
     public void scheduleAdditionalReminders(Schedule schedule, List<Integer> reminderTimes) {
-        for (int minutesBefore : reminderTimes) {
-            createAndScheduleReminder(schedule, minutesBefore);
-        }
+        reminderTimes.stream().distinct().forEach(minutesBefore -> {
+            if (minutesBefore > 0) {
+                createAndScheduleReminder(schedule, minutesBefore);
+            }
+        });
+
     }
 
     // 기존 알림을 복원하는 메서드 (앱 실행 시 호출)
