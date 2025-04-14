@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 
 import lombok.*;
 import org.example.dto.ScheduleDTO;
+import org.example.entity.Reminder;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.*;
@@ -14,7 +15,6 @@ import java.util.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
 public class Schedule {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,12 +37,16 @@ public class Schedule {
 
     private boolean isRecurring;
 
+    @Column(name = "display_on_calendar", nullable = false)
+    private Boolean displayOnCalendar = true;
+
     @ElementCollection
     @CollectionTable(name = "schedule_recurrence_days", joinColumns = @JoinColumn(name = "schedule_id"))
     @Column(name = "day_of_week")
     private List<Integer> recurrenceDays;
 
-    private List<Integer> reminderMinutesBeforeList;
+    @Column(name = "reminder_minutes_before")
+    private Integer reminderMinutesBefore;
 
     @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Reminder> reminders = new ArrayList<>();
@@ -66,9 +70,10 @@ public class Schedule {
                 .category(category)
                 .isRecurring(dto.isRecurring())
                 .recurrenceDays(dto.getRecurrenceDays() != null ? dto.getRecurrenceDays() : new ArrayList<>())
-                .reminderMinutesBeforeList(dto.getReminderMinutesBeforeList())
                 .isHiddenInToDo(false)         // 기본값 처리
                 .isReminderEnabled(true)      // 기본값 처리
+                .displayOnCalendar(dto.isDisplayOnCalendar())
+                .reminderMinutesBefore(dto.getReminderMinutesBefore())
                 .build();
     }
 
@@ -82,16 +87,6 @@ public class Schedule {
         }
         this.startTime = this.startTime.plusDays(days);
         this.endTime = this.endTime.plusDays(days);
-    }
-
-    // 리마인더 추가 메서드
-    public void addReminder(int minutesBefore) {
-        this.reminders.add(new Reminder(this, minutesBefore));
-    }
-
-    // 특정 리마인더 삭제 메서드
-    public void removeReminder(int minutesBefore) {
-        this.reminders.removeIf(reminder -> reminder.getMinutesBefore() == minutesBefore);
     }
 
     // To-Do 리스트에서 숨기면서 리마인더 비활성화

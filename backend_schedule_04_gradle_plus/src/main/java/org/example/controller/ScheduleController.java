@@ -6,6 +6,7 @@ import org.example.entity.Schedule;
 import org.example.service.ReminderService;
 
 import org.example.service.ScheduleService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,19 +26,12 @@ public class ScheduleController {
     public ResponseEntity<Schedule> addSchedule(
             @RequestHeader("firebaseUid") String firebaseUid,
             @RequestBody ScheduleDTO dto) {
-        List<Integer> reminderTimes = dto.getReminderMinutesBeforeList();
 
-        Schedule schedule = scheduleService.addSchedule(firebaseUid, dto, reminderTimes);
+        // ScheduleService에서 일정 추가 및 리마인더 설정까지 처리
+        Schedule schedule = scheduleService.addSchedule(firebaseUid, dto);
 
-        reminderService.scheduleDefaultReminder(schedule);
-
-        if (reminderTimes != null && !reminderTimes.isEmpty()) {
-            reminderService.scheduleAdditionalReminders(schedule, reminderTimes);
-        }
-
-        return ResponseEntity.ok(schedule);
+        return ResponseEntity.status(HttpStatus.CREATED).body(schedule);
     }
-
 
 
     @GetMapping("/todo")

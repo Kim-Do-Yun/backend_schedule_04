@@ -23,16 +23,14 @@ public class ScheduleDTO {
     private boolean isRecurring;
     private List<Integer> recurrenceDays;
 
-    private List<Integer> reminderMinutesBeforeList;
+    private Integer reminderMinutesBefore;
 
-
-
-
+    private boolean displayOnCalendar;
     // 생성자
     public ScheduleDTO(String title, String description, LocalDateTime startTime, LocalDateTime endTime,
                        int priority, Long categoryId,
                        boolean isRecurring, List<Integer> recurrenceDays,
-                       List<Integer> reminderMinutesBeforeList) {
+                       Integer reminderMinutesBefore, boolean displayOnCalendar) {
         this.title = title;
         this.description = description;
         this.startTime = startTime;
@@ -41,6 +39,7 @@ public class ScheduleDTO {
         this.categoryId = categoryId;
         this.isRecurring = isRecurring;
         this.recurrenceDays = recurrenceDays;
-        this.reminderMinutesBeforeList = reminderMinutesBeforeList;
+        this.reminderMinutesBefore = reminderMinutesBefore;
+        this.displayOnCalendar = displayOnCalendar;
     }
 }

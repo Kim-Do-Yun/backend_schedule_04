@@ -7,7 +7,6 @@ import org.example.repository.ScheduleRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.example.repository.ReminderRepository;
-import org.example.entity.Reminder;
 import org.example.repository.CategoryRepository;
 import org.example.entity.Category;
 
@@ -35,7 +34,7 @@ public class ScheduleService {
 
     // 일정 추가
     @Transactional
-    public Schedule addSchedule(String firebaseUid, ScheduleDTO dto, List<Integer> reminderTimes) {
+    public Schedule addSchedule(String firebaseUid, ScheduleDTO dto) {
         if (firebaseUid == null || firebaseUid.isBlank()) {
             throw new IllegalArgumentException("Firebase UID는 필수입니다.");
         }
@@ -46,6 +45,7 @@ public class ScheduleService {
 
         if (dto.getCategoryId() == null) {
             throw new IllegalArgumentException("카테고리 ID는 null일 수 없습니다.");
+
         }
 
         if (dto.getStartTime() == null || dto.getEndTime() == null) {
@@ -57,15 +57,16 @@ public class ScheduleService {
 
         Schedule schedule = Schedule.fromDTO(firebaseUid, dto, category);
 
-        if (reminderTimes != null) {
-            reminderTimes.forEach(schedule::addReminder);
+        // 스케줄 저장
+        Schedule saved = scheduleRepository.save(schedule);
+
+        // 리마인더 추가
+        // 스케줄 저장 후 리마인더 처리
+        if (dto.getReminderMinutesBefore() != null) {
+            reminderService.createReminder(saved, dto.getReminderMinutesBefore());
         }
-
-        return scheduleRepository.save(schedule);
+        return saved;
     }
-
-
-
 
     public List<Schedule> getToDoList(String firebaseUid) {
         return scheduleRepository.findPriorityOrHasAdditionalReminders(firebaseUid);
@@ -77,24 +78,8 @@ public class ScheduleService {
                 .orElseThrow(() -> new IllegalArgumentException("일정을 찾을 수 없습니다."));
 
         // 일정에서 특정 리마인더 삭제
-        schedule.removeReminder(minutesBefore);
+        reminderService.removeReminder(schedule, minutesBefore);
         return scheduleRepository.save(schedule);
-    }
-
-    @Transactional
-    public Reminder addReminder(Schedule schedule, int minutesBefore) {
-        if (schedule == null) {
-            throw new IllegalArgumentException("일정이 존재하지 않습니다.");
-        }
-
-        Reminder reminder = Reminder.builder()
-                .schedule(schedule)
-                .minutesBefore(minutesBefore)
-                .build();
-
-        reminder = reminderRepository.save(reminder);
-        reminderService.scheduleExistingReminder(reminder); // 저장 후 즉시 알림 예약
-        return reminder;
     }
 
 
@@ -112,7 +97,8 @@ public class ScheduleService {
         schedule.setPriority(dto.getPriority());
         schedule.setRecurring(dto.isRecurring());
         schedule.setRecurrenceDays(dto.getRecurrenceDays());
-        schedule.setReminderMinutesBeforeList(dto.getReminderMinutesBeforeList());
+        schedule.setReminderMinutesBefore(dto.getReminderMinutesBefore());
+        schedule.setDisplayOnCalendar(dto.isDisplayOnCalendar());
 
         if (dto.getCategoryId() != null) {
             Category category = categoryRepository.findById(dto.getCategoryId())

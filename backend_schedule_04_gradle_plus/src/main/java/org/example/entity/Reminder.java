@@ -3,6 +3,9 @@ package org.example.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
 @Entity
 @Getter
 @Setter
@@ -14,16 +17,21 @@ public class Reminder {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "is_active")
+    private Boolean isActive = true;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "schedule_id", nullable = false)
     private Schedule schedule;
+    private LocalDateTime reminderTime;
+    private int minutesBefore;
 
-    private int minutesBefore; // n분 전 설정 (예: 30분 전)
+    private Integer reminderMinutesBefore;
 
-    // ✅ (Schedule, int) 생성자가 없으면 추가하자!
-    public Reminder(Schedule schedule, int minutesBefore) {
+    public Reminder(Schedule schedule, Integer reminderMinutesBefore, LocalDateTime reminderTime) {
         this.schedule = schedule;
-        this.minutesBefore = minutesBefore;
+        this.reminderMinutesBefore = reminderMinutesBefore;
+        this.reminderTime = reminderTime;
     }
 
 }

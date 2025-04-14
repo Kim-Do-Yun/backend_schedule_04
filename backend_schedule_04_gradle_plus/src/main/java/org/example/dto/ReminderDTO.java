@@ -15,6 +15,6 @@ public class ReminderDTO {
     private boolean isRecurring;
     private Long scheduleId;
     private List<Integer> recurrenceDays;
-    private List<Integer> reminderMinutesBeforeList;
+    private Integer reminderMinutesBefore;
 }
 
